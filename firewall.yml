@@ -1,0 +1,64 @@
+---
+
+- name: Setup Firewall
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Firewalld on CentOS
+      yum:
+        name: firewalld
+        state: present
+      when: ansible_distribution == 'CentOS'
+
+    - name: Installing UFW on Ubuntu
+      apt:
+        name: ufw
+        state: present
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Enabling Firewalld on CentOS
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+      when: ansible_distribution == 'CentOS'
+
+    - name: Enabling UFW on Ubuntu
+      service:
+        name: ufw
+        state: started
+        enabled: yes
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Allowing SSH through firewall on CentOS
+      firewalld:
+        service: ssh
+        permanent: yes
+        state: enabled
+      when: ansible_distribution == 'CentOS'
+
+    - name: Allowing SSH through firewall on Ubuntu
+      ufw:
+        rule: allow
+        port: ssh
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Allowing additional ports through firewall on CentOS
+      firewalld:
+        port: "{{ item }}"
+        permanent: yes
+        state: enabled
+      loop:
+        - 80/tcp #HTTP
+        - 443/tcp #HTTPS
+      when: ansible_distribution == 'CentOS'
+
+    - name: Allow additional ports through firewall on Ubuntu
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - 80 #HTTP
+        - 443 #HTTPS
+      when: ansible_distribution == 'Ubuntu'
